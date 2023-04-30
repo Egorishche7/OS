@@ -1,5 +1,5 @@
-﻿#include <iostream>
-#include <windows.h>
+#include <iostream>
+#include <Windows.h>
 #include <process.h>
 
 using namespace std;
@@ -34,12 +34,12 @@ int main()
 
 	Pair p;
 	int size;
-	cout << "Input array size: ";
+	cout << "Enter array size: ";
 	cin >> size;
 	p.size = size;
 	p.arr = new int[size];
 
-	cout << "Input array elements:" << endl;
+	cout << "Enter array elements:" << endl;
 	for (int i = 0; i < size; i++)
 	{
 		cout << "array[" << i + 1 << "]=";
