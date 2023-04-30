@@ -1,5 +1,5 @@
-﻿#include <iostream>
-#include <windows.h>
+#include <iostream>
+#include <Windows.h>
 #include <string>
 
 using namespace std;
@@ -14,11 +14,11 @@ int main()
     si.dwYCountChars = 600;
 
     int size;
-    cout << "Input array size: ";
+    cout << "Enter array size: ";
     cin >> size;
     double* arr = new double[size];
 
-    cout << "Input array elements:" << endl;
+    cout << "Enter array elements:" << endl;
     for (int i = 0; i < size; i++)
     {
         cout << "array[" << i + 1 << "]=";
