@@ -1,5 +1,5 @@
-﻿#include <iostream>
-#include <windows.h>
+#include <iostream>
+#include <Windows.h>
 
 using namespace std;
 
@@ -13,14 +13,12 @@ CRITICAL_SECTION cs;
 DWORD WINAPI work(LPVOID)
 {
     int time;
-    cout << "Input time interval: ";
+    cout << "Enter time interval: ";
     cin >> time;
 
     unsigned int temp;
     for (int i = 0; i < length; i++)
-    {
         if (arr[i] % 2 == 0)
-        {
             for (int j = i; j > 0; j--)
             {
                 temp = arr[j - 1];
@@ -28,8 +26,6 @@ DWORD WINAPI work(LPVOID)
                 arr[j] = temp;
             }
             Sleep(time);
-        }
-    }
 
     SetEvent(hOutEvent);
 
@@ -40,8 +36,6 @@ DWORD WINAPI MultElement(LPVOID)
 {
     EnterCriticalSection(&cs);
     WaitForSingleObject(hAddEvent, INFINITE);
-
-   
 
     unsigned int res = 1;
     for (int i = 0; i < k; i++)
@@ -69,13 +63,13 @@ int main()
         return GetLastError();
 
     int size;
-    cout << "Input array size: ";
+    cout << "Enter array size: ";
     cin >> size;
     arr = new unsigned int[size];
     length = size;
 
     unsigned int temp;
-    cout << "Input array elements:" << endl;
+    cout << "Enter array elements:" << endl;
     for (int i = 0; i < size; i++)
     {
         cout << "array[" << i + 1 << "]=";
@@ -92,10 +86,8 @@ int main()
     if (hThread_1 == NULL)
         return GetLastError();
 
-    int kParam;
-    cout << "\nInput integer 1 <= k <= " << size << ": ";
-    cin >> kParam;
-    k = kParam;
+    cout << "\nEnter integer 1 <= k <= " << size << ": ";
+    cin >> k;
 
     ResumeThread(hThread_1);
 
@@ -105,8 +97,7 @@ int main()
 
     WaitForSingleObject(hOutEvent, INFINITE);
 
-    
-    cout << "Changed array: " << endl;
+    cout << "\nChanged array: " << endl;
     for (int i = 0; i < size; i++)
     {
         cout << arr[i] << " ";
