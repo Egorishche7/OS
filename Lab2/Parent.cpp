@@ -2,6 +2,8 @@
 #include <Windows.h>
 #include <string>
 
+const int MINIMAL_ARRAY_SIZE = 1;
+const int OFFSET = 1;
 const DWORD SCREEN_BUFFER_HEIGHT = 600;
 
 int size;
@@ -11,7 +13,7 @@ void initArray() {
     do {
         std::cout << "Enter array size: ";
         std::cin >> size;
-    } while (size < 1 && std::cout << "Array size must be positive.\n");
+    } while (size < MINIMAL_ARRAY_SIZE && std::cout << "Array size must be positive.\n");
 
     arr = new double[size];
     std::cout << "Enter array elements:\n";
@@ -33,7 +35,7 @@ wchar_t* buildCommandLine() {
     }
 
     wchar_t* cmd = new wchar_t[line.size()];
-    wcscpy_s(cmd, line.size() + 1, line.c_str());
+    wcscpy_s(cmd, line.size() + OFFSET, line.c_str());
 
     return cmd;
 }
@@ -53,8 +55,7 @@ int main() {
     if (!CreateProcess(nullptr, cmd, nullptr, nullptr, FALSE, CREATE_NEW_CONSOLE, nullptr, nullptr, &si, &pi)) {
         std::cerr << "\nProcess is not created.";
         return GetLastError();
-    }
-    else {
+    } else {
         std::cout << "\nProcess is created.\n";
         WaitForSingleObject(pi.hProcess, INFINITE);
     }
