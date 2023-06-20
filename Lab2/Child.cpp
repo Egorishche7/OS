@@ -1,37 +1,53 @@
 #include <iostream>
 
-using namespace std;
+const int ARRAY_SIZE_INDEX = 1;
+const int MIN_NUMBER_OF_ARGS = 2;
+const int OFFSET = 2;
 
-int main(int argc, char* argv[])
-{
-    if (argc < 2)
-    {
-        cerr << "Error!" << endl;
-        exit(1);
+int size;
+double* newArr;
+
+void initNewArray(char* arrInfo[]) {
+    size = atoi(arrInfo[ARRAY_SIZE_INDEX]);
+    newArr = new double[size];
+    for (int i = 0; i < size; i++) {
+        newArr[i] = atof(arrInfo[i + OFFSET]);
     }
+}
 
-    int size = atoi(argv[1]);
-    cout << "Source array:" << endl;
-    for (int i = 0; i < size; i++)
-        cout << "array[" << i + 1 << "]=" << atof(argv[i + 2]) << endl;
+void printArray(std::string text) {
+    std::cout << text;
+    for (int i = 0; i < size; i++) {
+        std::cout << newArr[i] << " ";
+    }
+    std::cout << "\n";
+}
 
-    double* newArr = new double[size];
-    for (int i = 0; i < size; i++)
-        newArr[i] = atof(argv[i + 2]);
-
+void bubbleSort() {
     double temp;
-    for (int i = 0; i < size - 1; i++)
-        for (int j = 0; j < size - i - 1; j++)
-            if (newArr[j] > newArr[j + 1])
-            {
+    for (int i = 0; i < size - 1; i++) {
+        for (int j = 0; j < size - i - 1; j++) {
+            if (newArr[j] > newArr[j + 1]) {
                 temp = newArr[j];
                 newArr[j] = newArr[j + 1];
                 newArr[j + 1] = temp;
             }
+        }
+    }
+}
 
-    cout << "\nSorted array:" << endl;
-    for (int i = 0; i < size; i++)
-        cout << "array[" << i + 1 << "]=" << newArr[i] << endl;
+int main(int argc, char* argv[]) {
+
+    if (argc < MIN_NUMBER_OF_ARGS) {
+        std::cerr << "Missing command line arguments!\n";
+        exit(1);
+    }
+
+    initNewArray(argv);
+    printArray("Source array:\n");
+
+    bubbleSort();
+    printArray("Sorted array:\n");
 
     delete[] newArr;
     newArr = nullptr;
