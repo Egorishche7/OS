@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <process.h>
 
+const int MINIMAL_ARRAY_SIZE = 1;
 const DWORD START_TIME = 50;
 const DWORD STOP_TIME = 3000;
 const DWORD TIME_OUT = 20;
@@ -16,7 +17,7 @@ void initArray(Pair& p) {
 	do {
 		std::cout << "Enter array size: ";
 		std::cin >> size;
-	} while (size < 1 && std::cout << "Array size must be positive.\n");
+	} while (size < MINIMAL_ARRAY_SIZE && std::cout << "Array size must be positive.\n");
 	p.size = size;
 	p.arr = new int[size];
 
