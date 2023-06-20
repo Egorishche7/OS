@@ -1,6 +1,7 @@
 #include <iostream>
 
 const int ARRAY_SIZE_INDEX = 1;
+const int ERROR_CODE_1 = 1;
 const int MIN_NUMBER_OF_ARGS = 2;
 const int OFFSET = 2;
 
@@ -40,7 +41,7 @@ int main(int argc, char* argv[]) {
 
     if (argc < MIN_NUMBER_OF_ARGS) {
         std::cerr << "Missing command line arguments!\n";
-        exit(1);
+        exit(ERROR_CODE_1);
     }
 
     initNewArray(argv);
