@@ -2,53 +2,68 @@
 #include <Windows.h>
 #include <string>
 
-using namespace std;
+const DWORD SCREEN_BUFFER_HEIGHT = 600;
 
-int main()
-{
+int size;
+double* arr;
+
+void initArray() {
+    do {
+        std::cout << "Enter array size: ";
+        std::cin >> size;
+    } while (size < 1 && std::cout << "Array size must be positive.\n");
+
+    arr = new double[size];
+    std::cout << "Enter array elements:\n";
+    for (int i = 0; i < size; i++) {
+        std::cin >> arr[i];
+    }
+}
+
+void setScreenBufferHeight(STARTUPINFO& si) {
+    si.dwFlags = STARTF_USECOUNTCHARS;
+    si.dwYCountChars = SCREEN_BUFFER_HEIGHT;
+}
+
+wchar_t* buildCommandLine() {
+    std::wstring line = L"\"Child.exe\" ";
+    line += std::to_wstring(size) + L" ";
+    for (int i = 0; i < size; i++) {
+        line += std::to_wstring(arr[i]) + L" ";
+    }
+
+    wchar_t* cmd = new wchar_t[line.size()];
+    wcscpy_s(cmd, line.size() + 1, line.c_str());
+
+    return cmd;
+}
+
+int main() {
+
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
 
     ZeroMemory(&si, sizeof(STARTUPINFO));
-    si.dwFlags = STARTF_USECOUNTCHARS;
-    si.dwYCountChars = 600;
+    setScreenBufferHeight(si);
 
-    int size;
-    cout << "Enter array size: ";
-    cin >> size;
-    double* arr = new double[size];
+    initArray();
 
-    cout << "Enter array elements:" << endl;
-    for (int i = 0; i < size; i++)
-    {
-        cout << "array[" << i + 1 << "]=";
-        cin >> arr[i];
-    }
+    wchar_t* cmd = buildCommandLine();
 
-    wstring line1 = L"\"Child.exe\" ";
-    line1 += to_wstring(size) + L" ";
-    for (int i = 0; i < size; i++)
-        line1 += to_wstring(arr[i]) + L" ";
-
-    wchar_t* line2 = new wchar_t[line1.size()];
-    wcscpy_s(line2, line1.size() + 1, line1.c_str());
-
-    if (!CreateProcess(NULL, line2, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi))
-    {
-        cerr << "\nProcess is not created.";
+    if (!CreateProcess(nullptr, cmd, nullptr, nullptr, FALSE, CREATE_NEW_CONSOLE, nullptr, nullptr, &si, &pi)) {
+        std::cerr << "\nProcess is not created.";
         return GetLastError();
     }
-    else
-    {
-        cout << "\nProcess is created." << endl;
+    else {
+        std::cout << "\nProcess is created.\n";
         WaitForSingleObject(pi.hProcess, INFINITE);
     }
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
 
-    delete[] arr, line2;
+    delete[] arr, cmd;
     arr = nullptr;
-    line2 = nullptr;
+    cmd = nullptr;
 
     return 0;
 }
