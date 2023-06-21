@@ -1,72 +1,90 @@
-﻿#include <iostream>
+#include <iostream>
 #include <Windows.h>
 
-using namespace std;
+const int NUM_OF_MESSAGES_INDEX = 1;
 
-int main(int argc, char** argv)
-{
-	HANDLE Mutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, L"Mutex");
-	if (Mutex == nullptr)
-	{
-		cout << "Writer: Mutex opening failed\n";
+HANDLE mutex;
+HANDLE eventWriterA;
+HANDLE eventWriterB;
+HANDLE eventWriterC;
+HANDLE eventWriterEnded;
+
+int openEvents() {
+	eventWriterA = OpenEvent(EVENT_ALL_ACCESS, FALSE, L"writerA");
+	if (nullptr == eventWriterA) {
+		std::cout << "Writer: eventWriterA opening failed\n";
+		system("pause");
+		return GetLastError();
+	}
+	eventWriterB = OpenEvent(EVENT_ALL_ACCESS, FALSE, L"writerB");
+	if (nullptr == eventWriterB) {
+		std::cout << "Writer: eventWriterB opening failed\n";
+		system("pause");
+		return GetLastError();
+	}
+	eventWriterC = OpenEvent(EVENT_ALL_ACCESS, FALSE, L"writerC");
+	if (nullptr == eventWriterC) {
+		std::cout << "Writer: eventWriterC opening failed\n";
 		system("pause");
 		return GetLastError();
 	}
 
-	WaitForSingleObject(Mutex, INFINITE);
-	cout << "Writer: Active process\n";
-
-	HANDLE Event_Writer_A = OpenEvent(EVENT_ALL_ACCESS, FALSE, L"Writer_A");
-	if (Event_Writer_A == nullptr)
-	{
-		cout << "Writer: Event_Writer_A opening failed\n";
-		system("pause");
-		return GetLastError();
-	}
-	HANDLE Event_Writer_B = OpenEvent(EVENT_ALL_ACCESS, FALSE, L"Writer_B");
-	if (Event_Writer_B == nullptr)
-	{
-		cout << "Writer: Event_Writer_B opening failed\n";
-		system("pause");
-		return GetLastError();
-	}
-	HANDLE Event_Writer_C = OpenEvent(EVENT_ALL_ACCESS, FALSE, L"Writer_C");
-	if (Event_Writer_C == nullptr)
-	{
-		cout << "Writer: Event_Writer_C opening failed\n";
+	eventWriterEnded = OpenEvent(EVENT_ALL_ACCESS, FALSE, L"writerEnded");
+	if (nullptr == eventWriterEnded) {
+		std::cout << "Writer: End opening failed\n";
 		system("pause");
 		return GetLastError();
 	}
 
-	HANDLE Event_Writer_Ended = OpenEvent(EVENT_ALL_ACCESS, FALSE, L"Writer_Ended");
-	if (Event_Writer_Ended == nullptr)
-	{
-		cout << "Writer: End opening failed\n";
-		system("pause");
-		return GetLastError();
-	}
+	return 0;
+}
 
-	for (int i = 0; i < atoi(argv[1]); i++)
-	{
+void startMessageWriting(int m) {
+	for (int i = 0; i < m; i++) {
 		char c;
-		cout << "Writer: Enter 'A', or 'B', or 'C': ";
-		cin >> c;
-		if (c == 'A')
-			SetEvent(Event_Writer_A);
-		else if (c == 'B')
-			SetEvent(Event_Writer_B);
-		else if (c == 'C')
-			SetEvent(Event_Writer_C);
+		std::cout << "Writer: Enter 'A', or 'B', or 'C': ";
+		std::cin >> c;
+		if (c == 'A') {
+			SetEvent(eventWriterA);
+		} else if (c == 'B') {
+			SetEvent(eventWriterB);
+		} else if (c == 'C') {
+			SetEvent(eventWriterC);
+		}
+	}
+}
+
+void closeHandles() {
+	CloseHandle(mutex);
+	CloseHandle(eventWriterA);
+	CloseHandle(eventWriterB);
+	CloseHandle(eventWriterC);
+	CloseHandle(eventWriterEnded);
+}
+
+int main(int argc, char* argv[]) {
+
+	mutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, L"mutex");
+	if (nullptr == mutex) {
+		std::cout << "Writer: Mutex opening failed\n";
+		system("pause");
+		return GetLastError();
 	}
 
-	SetEvent(Event_Writer_Ended);
-	ReleaseMutex(Mutex);
+	WaitForSingleObject(mutex, INFINITE);
+	std::cout << "Writer: Active process\n";
 
-	CloseHandle(Mutex);
-	CloseHandle(Event_Writer_A);
-	CloseHandle(Event_Writer_B);
-	CloseHandle(Event_Writer_C);
-	CloseHandle(Event_Writer_Ended);
+	int flag = openEvents();
+	if (flag != 0) {
+		return flag;
+	}
+
+	startMessageWriting(atoi(argv[NUM_OF_MESSAGES_INDEX]));
+
+	SetEvent(eventWriterEnded);
+	ReleaseMutex(mutex);
+
+	closeHandles();
 	system("pause");
 
 	return 0;
