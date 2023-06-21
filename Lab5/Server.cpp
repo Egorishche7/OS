@@ -1,108 +1,158 @@
-﻿#include <iostream>
+#include <iostream>
 #include <Windows.h>
 #include <conio.h>
 
-using namespace std;
+const int INFO_ARRAY_SIZE = 2;
+const int ARRAY_SIZE_INDEX = 0;
+const int N_INDEX = 1;
+const int MAX_VALUE = 20;
+const int OFFSET = 1;
 
-int main()
-{
-	int info[2];
-	cout << "Enter array size: ";
-	cin >> info[0];
+int info[INFO_ARRAY_SIZE];
+double* arr;
+int count;
+double* squares;
+double sum;
 
-	double* arr = new double[info[0]];
+HANDLE hEvent;
+SECURITY_ATTRIBUTES sa;
+HANDLE hReadPipe, hWritePipe;
+STARTUPINFO si;
+PROCESS_INFORMATION pi;
+
+void generateArrElements() {
 	srand(time(0));
-	for (int i = 0; i < info[0]; i++)
-		arr[i] = ((double)rand() / RAND_MAX) * 20;
-
-	STARTUPINFO si;
-	PROCESS_INFORMATION pi;
-	HANDLE hEvent;
-	HANDLE hReadPipe, hWritePipe;
-	SECURITY_ATTRIBUTES sa;
-
-	hEvent = CreateEvent(nullptr, FALSE, FALSE, L"Event");
-	if (hEvent == nullptr)
-	{
-		cout << "Server: Event wasn't created.";
-		return GetLastError();
+	for (int i = 0; i < info[ARRAY_SIZE_INDEX]; i++) {
+		arr[i] = ((double)rand() / RAND_MAX) * MAX_VALUE;
 	}
+}
 
+void initData() {
+	do {
+		std::cout << "Enter array size: ";
+		std::cin >> info[ARRAY_SIZE_INDEX];
+	} while (info[ARRAY_SIZE_INDEX] < 0 && std::cout << "Array size must be positive.");
+
+	arr = new double[info[ARRAY_SIZE_INDEX]];
+	generateArrElements();
+}
+
+void createInheritHandle() {
 	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 	sa.lpSecurityDescriptor = nullptr;
 	sa.bInheritHandle = TRUE;
+}
 
-	if (!CreatePipe(&hReadPipe, &hWritePipe, &sa, 0))
-	{
-		cout << "Server: Pipe creation failed.";
-		return GetLastError();
-	}
-
-	ZeroMemory(&si, sizeof(STARTUPINFO));
+wchar_t* buildCommandLine() {
 	wchar_t* line = new wchar_t[80];
 	wsprintf(line, L"\"Sum.exe\" %d %d", (int)hReadPipe, (int)hWritePipe);
-	if (!CreateProcess(nullptr, line, nullptr, nullptr, TRUE, CREATE_NEW_CONSOLE, FALSE, FALSE, &si, &pi))
-	{
-		cout << "Server: Client creation failed.";
-		return GetLastError();
-	}
 
-	cout << "Enter number N: ";
-	cin >> info[1];
+	return line;
+}
 
+int write() {
 	DWORD dwBytesWritten;
-	if (!WriteFile(hWritePipe, info, sizeof(int) * 2, &dwBytesWritten, nullptr))
-	{
-		cout << "Server: Info wasn't written.";
+
+	if (!WriteFile(hWritePipe, info, sizeof(int) * INFO_ARRAY_SIZE, &dwBytesWritten, nullptr)) {
+		std::cout << "Server: Info wasn't written.";
 		return GetLastError();
 	}
-	if (!WriteFile(hWritePipe, arr, sizeof(double) * info[0], &dwBytesWritten, nullptr))
-	{
-		cout << "Server: Array elements weren't written.";
+	if (!WriteFile(hWritePipe, arr, sizeof(double) * info[ARRAY_SIZE_INDEX], &dwBytesWritten, nullptr)) {
+		std::cout << "Server: Array elements weren't written.";
 		return GetLastError();
 	}
 
-	WaitForSingleObject(hEvent, INFINITE);
+	return 0;
+}
 
-	int m;
+int read() {
 	DWORD dwBytesRead;
-	if (!ReadFile(hReadPipe, &m, sizeof(int), &dwBytesRead, nullptr))
-	{
-		cout << "Server: Squares array size wasn't read.";
+
+	if (!ReadFile(hReadPipe, &count, sizeof(int), &dwBytesRead, nullptr)) {
+		std::cout << "Server: Squares array size wasn't read.";
 		return GetLastError();
 	}
-	double* squares = new double[m];
-	if (!ReadFile(hReadPipe, squares, sizeof(double) * m, &dwBytesRead, nullptr))
-	{
-		cout << "Server: Squares weren't read.";
+	squares = new double[count];
+	if (!ReadFile(hReadPipe, squares, sizeof(double) * count, &dwBytesRead, nullptr)) {
+		std::cout << "Server: Squares weren't read.";
 		return GetLastError();
 	}
-	double sum;
-	if (!ReadFile(hReadPipe, &sum, sizeof(double), &dwBytesRead, nullptr))
-	{
-		cout << "Server: Sum wasn't read.";
+	if (!ReadFile(hReadPipe, &sum, sizeof(double), &dwBytesRead, nullptr)) {
+		std::cout << "Server: Sum wasn't read.";
 		return GetLastError();
 	}
 
-	cout << "\nArray size: " << info[0] << endl;
-	cout << "N = " << info[1] << endl;
-	cout << "Source array:" << endl;
-	for (int i = 0; i < info[0]; i++)
-		cout << "array[" << i + 1 << "]=" << arr[i] << endl;
-	cout << "\nNew array (squares of array elements > N):" << endl;
-	for (int i = 0; i < m; i++)
-		cout<< "array[" << i + 1 << "]=" << squares[i] << endl;
-	cout << "Sum of squares: " << sum << endl;
+	return 0;
+}
 
+void printData() {
+	std::cout << "\nArray size: " << info[ARRAY_SIZE_INDEX];
+	std::cout << "\nN = " << info[N_INDEX];
+	std::cout << "\nSource array:\n";
+	for (int i = 0; i < info[ARRAY_SIZE_INDEX]; i++) {
+		std::cout << "array[" << i + OFFSET << "]=" << arr[i] << "\n";
+	}
+	std::cout << "\nNew array (squares of array elements > N):\n";
+	for (int i = 0; i < count; i++) {
+		std::cout << "array[" << i + OFFSET << "]=" << squares[i] << "\n";
+	}
+	std::cout << "Sum of squares: " << sum << "\n";
+}
+
+void releaseResources(wchar_t* cmd) {
 	CloseHandle(hReadPipe);
 	CloseHandle(hWritePipe);
 	CloseHandle(hEvent);
 	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
 
-	delete[] arr, line, squares;
+	delete[] arr, cmd, squares;
 	arr = squares = nullptr;
-	line = nullptr;
+	cmd = nullptr;
+}
+
+int main() {
+
+	initData();
+	createInheritHandle();
+
+	hEvent = CreateEvent(nullptr, FALSE, FALSE, L"event");
+	if (nullptr == hEvent) {
+		std::cout << "Server: Event wasn't created.";
+		return GetLastError();
+	}
+
+	if (!CreatePipe(&hReadPipe, &hWritePipe, &sa, 0)) {
+		std::cout << "Server: Pipe creation failed.";
+		return GetLastError();
+	}
+
+	ZeroMemory(&si, sizeof(STARTUPINFO));
+	wchar_t* cmd = buildCommandLine();
+
+	if (!CreateProcess(nullptr, cmd, nullptr, nullptr, TRUE, CREATE_NEW_CONSOLE, FALSE, FALSE, &si, &pi)) {
+		std::cout << "Server: Client creation failed.";
+		return GetLastError();
+	}
+
+	std::cout << "Enter number N: ";
+	std::cin >> info[N_INDEX];
+
+	int flag1 = write();
+	if (flag1 != 0) {
+		return flag1;
+	}
+
+	WaitForSingleObject(hEvent, INFINITE);
+
+	int flag2 = read();
+	if (flag2 != 0) {
+		return flag2;
+	}
+
+	printData();
+
+	releaseResources(cmd);
 
 	return 0;
 }
